@@ -9,14 +9,280 @@ IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'stg')
 GO
 
 --se a tabela já existir, elimina-a 
+
+IF OBJECT_ID('stg.stg_OrderDetail', 'U') IS NOT NULL
+    DROP TABLE stg.stg_OrderDetail;
+
+IF OBJECT_ID('stg.stg_Sale', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Sale;
+
 IF OBJECT_ID('stg.stg_Currency', 'U') IS NOT NULL
     DROP TABLE stg.stg_Currency;
+
+IF OBJECT_ID('stg.stg_SalesTerritory', 'U') IS NOT NULL
+    DROP TABLE stg.stg_SalesTerritory;
+
+IF OBJECT_ID('stg.stg_Country', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Country;
+
+IF OBJECT_ID('stg.stg_SentEmails', 'U') IS NOT NULL
+    DROP TABLE stg.stg_SentEmails
+
+IF OBJECT_ID('stg.stg_User', 'U') IS NOT NULL
+    DROP TABLE stg.stg_User;
+
+IF OBJECT_ID('stg.stg_Province', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Province;
+
+IF OBJECT_ID('stg.stg_City', 'U') IS NOT NULL
+    DROP TABLE stg.stg_City;
+
+IF OBJECT_ID('stg.stg_Phone', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Phone;
+
+IF OBJECT_ID('stg.stg_Customer', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Customer;
+
+IF OBJECT_ID('stg.stg_Manufacturer', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Manufacturer;
+
+IF OBJECT_ID('stg.stg_ProductSubCategory', 'U') IS NOT NULL
+    DROP TABLE stg.stg_ProductSubCategory;
+
+IF OBJECT_ID('stg.stg_SalesTerritoryGroup', 'U') IS NOT NULL
+    DROP TABLE stg.stg_SalesTerritoryGroup;
+
+IF OBJECT_ID('stg.stg_Product', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Product;
+
 GO
 
 
+
+
+-- COUNTRY --------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Country (
+    CountryKey INT PRIMARY KEY,                
+    CountryName NVARCHAR(100) NOT NULL,        
+    CountryRegionCode NVARCHAR(10) NULL        
+);
+GO
+
+-- SALES TERRITORY GROUP ---------------------------------------------------------------------------
+CREATE TABLE stg.stg_SalesTerritoryGroup (
+    GroupKey INT PRIMARY KEY,                  
+    GroupName NVARCHAR(100) NOT NULL           
+);
+GO
+
+-- CUSTOMER --------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Customer (
+    CustomerKey INT PRIMARY KEY,    
+    Title NVARCHAR(10) NULL,
+    FirstName NVARCHAR(50) NOT NULL,
+    MiddleName NVARCHAR(50) NULL,
+    LastName NVARCHAR(50) NOT NULL,
+    BirthDate DATE NOT NULL,
+    MaritalStatus CHAR(1) NULL,                      
+    Gender CHAR(1) NULL,                         
+    EmailAddress NVARCHAR(100) NULL,
+    YearlyIncome DECIMAL(18,2) NULL,
+    Education NVARCHAR(50) NULL,
+    Occupation NVARCHAR(100) NULL,
+    NumberCarsOwned TINYINT NULL,
+    AddressLine1 NVARCHAR(100) NULL,
+    City NVARCHAR(50) NULL,
+    StateProvinceCode NVARCHAR(10) NULL,
+    StateProvinceName NVARCHAR(100) NULL,
+    CountryRegionCode NVARCHAR(10) NULL,
+    CountryRegionName NVARCHAR(100) NULL,
+    PostalCode NVARCHAR(20) NULL,
+    SalesTerritoryKey INT NULL,                     
+    Phone NVARCHAR(25) NULL,
+    DateFirstPurchase DATE NULL,
+    [Password] NVARCHAR(255) NULL,                  
+    NIF NVARCHAR(20) NULL                         
+);
+GO
+
+-- USER -------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_User (
+    UserKey INT PRIMARY KEY,
+    Email NVARCHAR(100) NOT NULL UNIQUE,
+    [Password] NVARCHAR(255) NOT NULL,
+    SecurityQuestion NVARCHAR(255),
+    SecurityAnswer NVARCHAR(255),
+    DateFirstPurchase DATE
+
+     CONSTRAINT FK_User_Customer
+        FOREIGN KEY (UserKey)
+        REFERENCES stg.stg_Customer(CustomerKey)
+);
+GO
+
+-- SENT EMAILS ------------------------------------------------------------------------------
+CREATE TABLE stg.stg_SentEmails (
+    EmailId INT PRIMARY KEY,
+    UserKey INT NOT NULL,
+    Receiver NVARCHAR(100) NOT NULL,
+    Message NVARCHAR(255) NOT NULL,
+    TimeStamp DATE,
+
+     CONSTRAINT FK_SentEmails_User
+        FOREIGN KEY (UserKey)
+        REFERENCES stg.stg_User(UserKey)
+);
+GO
+
+-- PHONE ------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Phone (
+    Number NVARCHAR(50),
+    CustomerKey INT NOT NULL,
+
+    CONSTRAINT FK_Phone_Customer
+        FOREIGN KEY (CustomerKey)
+        REFERENCES stg.stg_Customer(CustomerKey)
+    );
+
+
+-- CITY -----------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_City (
+    CityKey INT PRIMARY KEY,   
+    CustomerKey INT NOT NULL,
+    CityName NVARCHAR(100) NOT NULL,           
+
+    CONSTRAINT FK_City_Customer
+        FOREIGN KEY (CustomerKey)
+        REFERENCES stg.stg_Customer(CustomerKey)
+);
+GO
+
+-- PROVINCE ---------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Province (
+    StateProvinceKey INT PRIMARY KEY,
+    CityKey INT NOT NULL,
+    StateProvinceName NVARCHAR(50),
+
+    CONSTRAINT FK_Province_City
+        FOREIGN KEY (CityKey)
+        REFERENCES stg.stg_City(CityKey)
+);
+
+-- CURENCY -----------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Currency (
     CurrencyKey INT IDENTITY(1,1) PRIMARY KEY,
     CurrencyAlternateKey NVARCHAR(50) UNIQUE,
     CurrencyName NVARCHAR(50)
+);
+GO
+
+-- PRODUCTS --------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Product (
+    ProductKey INT PRIMARY KEY,     
+    ModelName NVARCHAR(100) NULL,               
+    Style NCHAR(2) NULL,                        
+    SubCategoryKey INT NULL,                    
+    EnglishDescription NVARCHAR(400) NULL,      
+    Class NCHAR(2) NULL,                        
+    DealerPrice DECIMAL(18,2) NULL,             
+    StandardCost DECIMAL(18,2) NULL,            
+    FinishedGoodsFlag BIT NOT NULL DEFAULT 1,   -- 1 = produto finalizado
+    Color NVARCHAR(20) NULL,                    
+    SafetyStockLevel SMALLINT NULL,             
+    ListPrice DECIMAL(18,2) NULL,               
+    Size NVARCHAR(10) NULL,                   
+    SizeRange NVARCHAR(25) NULL,                
+    Weight DECIMAL(10,2) NULL,                  
+    DaysToManufacture SMALLINT NULL,            
+    ProductLine NCHAR(2) NULL                   
+);
+GO
+
+-- PRODUCT SUBCATEGORY ----------------------------------------------------------------------------
+CREATE TABLE stg.stg_ProductSubCategory (
+    SubCategoryKey INT PRIMARY KEY,                    
+    ProductKey INT NOT NULL,                           
+    EnglishCategoryName NVARCHAR(100) NULL,            
+    SubCategoryName NVARCHAR(100) NULL,  
+
+    CONSTRAINT FK_ProductSubCategory_Product
+        FOREIGN KEY (ProductKey)
+        REFERENCES stg.stg_Product(ProductKey)
+);
+GO
+
+-- MANUFACTURER ------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Manufacturer (
+    ManuKey INT PRIMARY KEY,
+    ProductKey INT NOT NULL,
+    ManuName NVARCHAR(100)
+
+    CONSTRAINT FK_Manufacturer_Product
+        FOREIGN KEY (ProductKey)
+        REFERENCES stg.stg_Product(ProductKey)
+);
+GO
+
+-- SALES TERRITORY -------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_SalesTerritory (
+    SalesTerritoryKey INT PRIMARY KEY,
+    SalesTerritoryRegion NVARCHAR(100) NOT NULL, 
+    CountryKey INT NOT NULL,                             
+    GroupKey INT NOT NULL,                               
+    StateProvinceKey INT NULL,                           
+
+    CONSTRAINT FK_SalesTerritory_Country 
+        FOREIGN KEY (CountryKey)
+        REFERENCES stg.stg_Country(CountryKey),
+
+    CONSTRAINT FK_SalesTerritory_Group 
+        FOREIGN KEY (GroupKey)
+        REFERENCES stg.stg_SalesTerritoryGroup(GroupKey),
+
+    CONSTRAINT FK_SalesTerritory_Province
+        FOREIGN KEY (StateProvinceKey)
+        REFERENCES stg.stg_Province(StateProvinceKey)
+);
+GO
+
+-- SALE ---------------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Sale (
+    SalesOrderNumber INT PRIMARY KEY, 
+    OrderDate DATE NOT NULL,
+    DueDate DATE NULL,  
+    ShipDate DATE NULL,  
+    CustomerKey INT NOT NULL,
+    CurrencyKey INT NOT NULL,   
+    SalesOrderLineNumber INT NULL,
+
+    CONSTRAINT FK_Sale_Customer 
+        FOREIGN KEY (CustomerKey)
+        REFERENCES stg.stg_Customer(CustomerKey),
+
+    CONSTRAINT FK_Sale_Currency 
+        FOREIGN KEY (CurrencyKey)
+        REFERENCES stg.stg_Currency(CurrencyKey)
+);
+GO
+
+-- ORDER DETAIL -------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_OrderDetail (
+    OrderDetailKey INT PRIMARY KEY,   
+    SalesOrderNumber INT NOT NULL,                       -- FK -> Sale
+    ProductKey INT NOT NULL,                             -- FK -> Product
+    TaxAmt DECIMAL(10,2) NULL, 
+    UnitPrice DECIMAL(10,2) NOT NULL,  
+    Quantity INT NOT NULL,   
+    TotalSalesAmt AS (UnitPrice * Quantity + ISNULL(TaxAmt,0)) PERSISTED,
+    Freight DECIMAL(10,2) NULL, 
+    ProductStandardAmt DECIMAL(10,2) NULL,
+
+    CONSTRAINT FK_OrderDetail_Sale 
+        FOREIGN KEY (SalesOrderNumber)
+        REFERENCES stg.stg_Sale(SalesOrderNumber),
+
+    CONSTRAINT FK_OrderDetail_Product 
+        FOREIGN KEY (ProductKey)
+        REFERENCES stg.stg_Product(ProductKey)
 );
 GO
