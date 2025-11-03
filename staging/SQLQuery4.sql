@@ -46,14 +46,14 @@ IF OBJECT_ID('stg.stg_Customer', 'U') IS NOT NULL
 IF OBJECT_ID('stg.stg_Manufacturer', 'U') IS NOT NULL
     DROP TABLE stg.stg_Manufacturer;
 
-IF OBJECT_ID('stg.stg_ProductSubCategory', 'U') IS NOT NULL
-    DROP TABLE stg.stg_ProductSubCategory;
-
 IF OBJECT_ID('stg.stg_SalesTerritoryGroup', 'U') IS NOT NULL
     DROP TABLE stg.stg_SalesTerritoryGroup;
 
 IF OBJECT_ID('stg.stg_Product', 'U') IS NOT NULL
     DROP TABLE stg.stg_Product;
+
+IF OBJECT_ID('stg.stg_ProductSubCategory', 'U') IS NOT NULL
+    DROP TABLE stg.stg_ProductSubCategory;
 
 GO
 
@@ -168,11 +168,19 @@ CREATE TABLE stg.stg_Province (
         REFERENCES stg.stg_City(CityKey)
 );
 
--- CURENCY -----------------------------------------------------------------------------------------
+-- CURRENCY -----------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Currency (
     CurrencyKey INT IDENTITY(1,1) PRIMARY KEY,
     CurrencyAlternateKey NVARCHAR(50) UNIQUE,
     CurrencyName NVARCHAR(50)
+);
+GO
+
+-- PRODUCT SUBCATEGORY ----------------------------------------------------------------------------
+CREATE TABLE stg.stg_ProductSubCategory (
+    SubCategoryKey INT PRIMARY KEY,                    
+    EnglishCategoryName NVARCHAR(100) NULL,            
+    SubCategoryName NVARCHAR(100) NULL
 );
 GO
 
@@ -181,12 +189,12 @@ CREATE TABLE stg.stg_Product (
     ProductKey INT PRIMARY KEY,     
     ModelName NVARCHAR(100) NULL,               
     Style NCHAR(2) NULL,                        
-    SubCategoryKey INT NULL,                    
+    SubCategoryKey INT NULL,  -- FK PARA SubCategory                   
     EnglishDescription NVARCHAR(400) NULL,      
     Class NCHAR(2) NULL,                        
     DealerPrice DECIMAL(18,2) NULL,             
     StandardCost DECIMAL(18,2) NULL,            
-    FinishedGoodsFlag BIT NOT NULL DEFAULT 1,   -- 1 = produto finalizado
+    FinishedGoodsFlag BIT NOT NULL DEFAULT 1,   
     Color NVARCHAR(20) NULL,                    
     SafetyStockLevel SMALLINT NULL,             
     ListPrice DECIMAL(18,2) NULL,               
@@ -194,26 +202,17 @@ CREATE TABLE stg.stg_Product (
     SizeRange NVARCHAR(25) NULL,                
     Weight DECIMAL(10,2) NULL,                  
     DaysToManufacture SMALLINT NULL,            
-    ProductLine NCHAR(2) NULL                   
-);
-GO
+    ProductLine NCHAR(2) NULL, 
 
--- PRODUCT SUBCATEGORY ----------------------------------------------------------------------------
-CREATE TABLE stg.stg_ProductSubCategory (
-    SubCategoryKey INT PRIMARY KEY,                    
-    ProductKey INT NOT NULL,                           
-    EnglishCategoryName NVARCHAR(100) NULL,            
-    SubCategoryName NVARCHAR(100) NULL,  
-
-    CONSTRAINT FK_ProductSubCategory_Product
-        FOREIGN KEY (ProductKey)
-        REFERENCES stg.stg_Product(ProductKey)
+    CONSTRAINT FK_Product_SubCategory
+        FOREIGN KEY (SubCategoryKey)
+        REFERENCES stg.stg_ProductSubCategory(SubCategoryKey)
 );
 GO
 
 -- MANUFACTURER ------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Manufacturer (
-    ManuKey INT PRIMARY KEY,
+    ManuKey INT IDENTITY(1,1) PRIMARY KEY,
     ProductKey INT NOT NULL,
     ManuName NVARCHAR(100)
 
