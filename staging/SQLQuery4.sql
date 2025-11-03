@@ -70,7 +70,7 @@ GO
 
 -- SALES TERRITORY GROUP ---------------------------------------------------------------------------
 CREATE TABLE stg.stg_SalesTerritoryGroup (
-    GroupKey INT PRIMARY KEY,                  
+    GroupKey INT IDENTITY(1,1) PRIMARY KEY,                  
     GroupName NVARCHAR(100) NOT NULL           
 );
 GO

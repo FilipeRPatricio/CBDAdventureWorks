@@ -84,3 +84,16 @@ SET ManuName = 'Mike'
 WHERE ProductKey IN (SELECT ProductKey FROM stg.stg_Product WHERE ProductLine = 'M');
 
 -- SELECT TOP 10 * FROM stg.stg_Manufacturer;
+
+
+-- SALES TERRITORY GROUP ---------------------------------------------------------------------------
+
+INSERT INTO stg.stg_SalesTerritoryGroup (
+    GroupName
+    )
+    SELECT DISTINCT
+        s.GroupName
+    FROM stg.stg_SalesTerritoryGroup AS s
+
+    SELECT TOP 10 * FROM stg.stg_SalesTerritoryGroup;
+
