@@ -34,14 +34,15 @@ IF OBJECT_ID('stg.stg_User', 'U') IS NOT NULL
 IF OBJECT_ID('stg.stg_Province', 'U') IS NOT NULL
     DROP TABLE stg.stg_Province;
 
-IF OBJECT_ID('stg.stg_City', 'U') IS NOT NULL
-    DROP TABLE stg.stg_City;
 
 IF OBJECT_ID('stg.stg_Phone', 'U') IS NOT NULL
     DROP TABLE stg.stg_Phone;
 
 IF OBJECT_ID('stg.stg_Customer', 'U') IS NOT NULL
     DROP TABLE stg.stg_Customer;
+
+IF OBJECT_ID('stg.stg_City', 'U') IS NOT NULL
+    DROP TABLE stg.stg_City;
 
 IF OBJECT_ID('stg.stg_Manufacturer', 'U') IS NOT NULL
     DROP TABLE stg.stg_Manufacturer;
@@ -62,7 +63,7 @@ GO
 
 -- COUNTRY --------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Country (
-    CountryKey INT PRIMARY KEY,                
+    CountryKey INT IDENTITY(1,1) PRIMARY KEY,                
     CountryName NVARCHAR(100) NOT NULL,        
     CountryRegionCode NVARCHAR(10) NULL        
 );
@@ -72,6 +73,14 @@ GO
 CREATE TABLE stg.stg_SalesTerritoryGroup (
     GroupKey INT IDENTITY(1,1) PRIMARY KEY,                  
     GroupName NVARCHAR(100) NOT NULL           
+);
+GO
+
+
+-- CITY -----------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_City (
+    CityKey INT IDENTITY(1,1) PRIMARY KEY,
+    CityName NVARCHAR(100) NOT NULL UNIQUE
 );
 GO
 
@@ -91,7 +100,7 @@ CREATE TABLE stg.stg_Customer (
     Occupation NVARCHAR(100) NULL,
     NumberCarsOwned TINYINT NULL,
     AddressLine1 NVARCHAR(100) NULL,
-    City NVARCHAR(50) NULL,
+    CityKey INT NOT NULL,
     StateProvinceCode NVARCHAR(10) NULL,
     StateProvinceName NVARCHAR(100) NULL,
     CountryRegionCode NVARCHAR(10) NULL,
@@ -101,7 +110,10 @@ CREATE TABLE stg.stg_Customer (
     Phone NVARCHAR(25) NULL,
     DateFirstPurchase DATE NULL,
     [Password] NVARCHAR(255) NULL,                  
-    NIF NVARCHAR(20) NULL                         
+    NIF NVARCHAR(20) NULL 
+    
+CONSTRAINT FK_Customer_City FOREIGN KEY (CityKey)
+        REFERENCES stg.stg_City(CityKey)
 );
 GO
 
@@ -112,7 +124,7 @@ CREATE TABLE stg.stg_User (
     [Password] NVARCHAR(255) NOT NULL,
     SecurityQuestion NVARCHAR(255),
     SecurityAnswer NVARCHAR(255),
-    DateFirstPurchase DATE
+    DateFirstPurchase DATE,
 
      CONSTRAINT FK_User_Customer
         FOREIGN KEY (UserKey)
@@ -122,7 +134,7 @@ GO
 
 -- SENT EMAILS ------------------------------------------------------------------------------
 CREATE TABLE stg.stg_SentEmails (
-    EmailId INT PRIMARY KEY,
+    EmailId INT IDENTITY(1,1) PRIMARY KEY,
     UserKey INT NOT NULL,
     Receiver NVARCHAR(100) NOT NULL,
     Message NVARCHAR(255) NOT NULL,
@@ -145,21 +157,10 @@ CREATE TABLE stg.stg_Phone (
     );
 
 
--- CITY -----------------------------------------------------------------------------------------
-CREATE TABLE stg.stg_City (
-    CityKey INT PRIMARY KEY,   
-    CustomerKey INT NOT NULL,
-    CityName NVARCHAR(100) NOT NULL,           
-
-    CONSTRAINT FK_City_Customer
-        FOREIGN KEY (CustomerKey)
-        REFERENCES stg.stg_Customer(CustomerKey)
-);
-GO
 
 -- PROVINCE ---------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Province (
-    StateProvinceKey INT PRIMARY KEY,
+    StateProvinceKey INT IDENTITY(1,1) PRIMARY KEY,
     CityKey INT NOT NULL,
     StateProvinceName NVARCHAR(50),
 
@@ -246,13 +247,15 @@ GO
 
 -- SALE ---------------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Sale (
-    SalesOrderNumber INT PRIMARY KEY, 
+    SalesOrderNumber NVARCHAR(20) NOT NULL, 
+    SalesOrderLineNumber INT NOT NULL,
     OrderDate DATE NOT NULL,
     DueDate DATE NULL,  
     ShipDate DATE NULL,  
     CustomerKey INT NOT NULL,
-    CurrencyKey INT NOT NULL,   
-    SalesOrderLineNumber INT NULL,
+    CurrencyKey INT NOT NULL,
+
+    CONSTRAINT PK_Sale PRIMARY KEY (SalesOrderNumber, SalesOrderLineNumber),
 
     CONSTRAINT FK_Sale_Customer 
         FOREIGN KEY (CustomerKey)
@@ -266,9 +269,10 @@ GO
 
 -- ORDER DETAIL -------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_OrderDetail (
-    OrderDetailKey INT PRIMARY KEY,   
-    SalesOrderNumber INT NOT NULL,                       -- FK -> Sale
-    ProductKey INT NOT NULL,                             -- FK -> Product
+    OrderDetailKey INT IDENTITY(1,1) PRIMARY KEY,   
+    SalesOrderNumber NVARCHAR(20) NOT NULL,
+    SalesOrderLineNumber INT NOT NULL,       -- adicionamos isto!
+    ProductKey INT NOT NULL,                 
     TaxAmt DECIMAL(10,2) NULL, 
     UnitPrice DECIMAL(10,2) NOT NULL,  
     Quantity INT NOT NULL,   
@@ -277,11 +281,12 @@ CREATE TABLE stg.stg_OrderDetail (
     ProductStandardAmt DECIMAL(10,2) NULL,
 
     CONSTRAINT FK_OrderDetail_Sale 
-        FOREIGN KEY (SalesOrderNumber)
-        REFERENCES stg.stg_Sale(SalesOrderNumber),
+        FOREIGN KEY (SalesOrderNumber, SalesOrderLineNumber)
+        REFERENCES stg.stg_Sale(SalesOrderNumber, SalesOrderLineNumber),
 
     CONSTRAINT FK_OrderDetail_Product 
         FOREIGN KEY (ProductKey)
         REFERENCES stg.stg_Product(ProductKey)
 );
 GO
+
