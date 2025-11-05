@@ -3,6 +3,32 @@
 USE AdventureWorksLegacy;
 GO
 
+-- Cria Master Key só se não existir
+IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
+    CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
+
+-- Cria Certificado só se não existir
+IF NOT EXISTS (SELECT * FROM sys.certificates WHERE name = 'Cert_NIF')
+    CREATE CERTIFICATE Cert_NIF WITH SUBJECT = 'Certificado para NIF';
+
+-- Cria Chave Simétrica só se não existir
+IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = 'Key_NIF')
+    CREATE SYMMETRIC KEY Key_NIF
+        WITH ALGORITHM = AES_256
+        ENCRYPTION BY CERTIFICATE Cert_NIF;
+
+
+-- Encriptação/ criação da chave 
+/**
+ Executa isto apenas uma vez no setup
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
+CREATE CERTIFICATE Cert_NIF WITH SUBJECT = 'Certificado para NIF';
+CREATE SYMMETRIC KEY Key_NIF
+    WITH ALGORITHM = AES_256
+    ENCRYPTION BY CERTIFICATE Cert_NIF;
+**/
+
+
 
 --CURRENCY --------------------------------------------------------------------------------
 INSERT INTO stg.stg_Currency (CurrencyAlternateKey, CurrencyName)
@@ -106,6 +132,10 @@ WHERE c.City IS NOT NULL
 
 -- CUSTOMER -------------------------------------------------------------------------------------------
 
+
+OPEN SYMMETRIC KEY Key_NIF DECRYPTION BY CERTIFICATE Cert_NIF;
+
+
 INSERT INTO stg.stg_Customer (
     CustomerKey, Title, FirstName, MiddleName, LastName, BirthDate, MaritalStatus, Gender,
     EmailAddress, YearlyIncome, Education, Occupation, NumberCarsOwned, AddressLine1, CityKey,
@@ -136,11 +166,28 @@ SELECT
     c.SalesTerritoryKey,
     c.Phone,
     c.DateFirstPurchase,
-    c.Password,
-    c.NIF
+    HASHBYTES('SHA2_512', c.Password),
+    ENCRYPTBYKEY(KEY_GUID('Key_NIF'), CONVERT(nvarchar(20), c.NIF))
+
 FROM dbo.Customer AS c
 INNER JOIN stg.stg_City AS city ON c.City = city.CityName
-WHERE c.CustomerKey NOT IN (SELECT CustomerKey FROM stg.stg_Customer);  
+WHERE c.CustomerKey NOT IN (SELECT CustomerKey FROM stg.stg_Customer);
+
+CLOSE SYMMETRIC KEY Key_NIF;
+
+-- para desencriptar
+/**
+OPEN SYMMETRIC KEY Key_NIF DECRYPTION BY CERTIFICATE Cert_NIF;
+
+
+SELECT 
+    CustomerKey,
+    CONVERT(nvarchar(20), DECRYPTBYKEY(NIF)) AS NIF_Desencriptado
+FROM stg.stg_Customer;
+
+CLOSE SYMMETRIC KEY Key_NIF;
+**/
+
  
  -- USER -------------------------------------------------------------------------------------------------
 

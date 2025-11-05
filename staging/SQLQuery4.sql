@@ -85,6 +85,9 @@ CREATE TABLE stg.stg_City (
 GO
 
 -- CUSTOMER --------------------------------------------------------------------------------
+
+OPEN SYMMETRIC KEY Key_NIF DECRYPTION BY CERTIFICATE Cert_NIF;
+
 CREATE TABLE stg.stg_Customer (
     CustomerKey INT PRIMARY KEY,    
     Title NVARCHAR(10) NULL,
@@ -109,13 +112,12 @@ CREATE TABLE stg.stg_Customer (
     SalesTerritoryKey INT NULL,                     
     Phone NVARCHAR(25) NULL,
     DateFirstPurchase DATE NULL,
-    [Password] NVARCHAR(255) NULL,                  
-    NIF NVARCHAR(20) NULL 
-    
-CONSTRAINT FK_Customer_City FOREIGN KEY (CityKey)
+    [Password] VARBINARY(64) NULL,       
+    NIF VARBINARY(MAX) NULL,
+
+    CONSTRAINT FK_Customer_City FOREIGN KEY (CityKey)
         REFERENCES stg.stg_City(CityKey)
 );
-GO
 
 -- USER -------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_User (
