@@ -78,7 +78,7 @@ SELECT DISTINCT
     p.ProductSubcategoryKey AS SubCategoryKey,
     p.EnglishDescription,
     p.Class,
-    TRY_CAST(p.DealerPrice AS DECIMAL(18,2)) AS DealerPrice,
+    TRY_CAST(p.DealerPrice AS DECIMAL(18,2)) AS DealerPrice,  -- tava a ter problemas pq em dbo.product os numeros estavam a restornar varchar
     p.StandardCost,
     p.FinishedGoodsFlag,
     p.Color,
