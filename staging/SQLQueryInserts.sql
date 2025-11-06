@@ -58,6 +58,14 @@ WHERE ps.ProductSubcategoryKey IS NOT NULL
   AND ps.ProductSubcategoryKey NOT IN (SELECT SubCategoryKey FROM stg.stg_ProductSubCategory);
 
 -- PRODUCTS -------------------------------------------------------------------------------
+
+/**
+SELECT DISTINCT DealerPrice, ListPrice
+FROM dbo.Products
+WHERE ISNUMERIC(DealerPrice) = 0 OR ISNUMERIC(ListPrice) = 0;
+**/
+
+
 INSERT INTO stg.stg_Product (
     ProductKey, ModelName, Style, SubCategoryKey, EnglishDescription, Class,
     DealerPrice, StandardCost, FinishedGoodsFlag, Color, SafetyStockLevel,
@@ -70,20 +78,36 @@ SELECT DISTINCT
     p.ProductSubcategoryKey AS SubCategoryKey,
     p.EnglishDescription,
     p.Class,
-    p.DealerPrice,
+    TRY_CAST(p.DealerPrice AS DECIMAL(18,2)) AS DealerPrice,
     p.StandardCost,
     p.FinishedGoodsFlag,
     p.Color,
     p.SafetyStockLevel,
-    p.ListPrice,
+    TRY_CAST(p.ListPrice AS DECIMAL(18,2)) AS ListPrice,
     p.Size,
     p.SizeRange,
     p.Weight,
     p.DaysToManufacture,
     p.ProductLine
 FROM dbo.Products AS p
-WHERE p.ProductKey NOT IN (SELECT ProductKey FROM stg.stg_Product);  
+WHERE 
+    ISNUMERIC(p.DealerPrice) = 1
+    AND ISNUMERIC(p.ListPrice) = 1
+    AND TRY_CAST(p.DealerPrice AS DECIMAL(18,2)) >= 1.0
+    AND TRY_CAST(p.ListPrice AS DECIMAL(18,2)) >= 1.0
+    AND p.ProductKey NOT IN (SELECT ProductKey FROM stg.stg_Product);
+ 
 GO
+
+-- Observação da verificação do numero de produtos com valor inferior a 1
+
+SELECT COUNT(*) AS TotalOriginal FROM dbo.Products;
+SELECT COUNT(*) AS TotalCarregados FROM stg.stg_Product;
+SELECT COUNT(*) AS Invalidos FROM dbo.Products
+WHERE ISNUMERIC(DealerPrice) = 0 OR ISNUMERIC(ListPrice) = 0
+   OR TRY_CAST(DealerPrice AS DECIMAL(18,2)) < 1
+   OR TRY_CAST(ListPrice AS DECIMAL(18,2)) < 1;
+
 
 -- MANUFACTURER -------------------------------------------------------------------------------
 INSERT INTO stg.stg_Manufacturer (
@@ -301,10 +325,6 @@ WHERE NOT EXISTS (
     WHERE od.SalesOrderNumber = s.SalesOrderNumber
       AND od.SalesOrderLineNumber = s.SalesOrderLineNumber
 );
-
-select * from stg.stg_OrderDetail
-
-
 
 
 

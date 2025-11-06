@@ -117,7 +117,10 @@ CREATE TABLE stg.stg_Customer (
 
     CONSTRAINT FK_Customer_City FOREIGN KEY (CityKey)
         REFERENCES stg.stg_City(CityKey)
+
+    
 );
+
 
 -- USER -------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_User (
@@ -211,6 +214,12 @@ CREATE TABLE stg.stg_Product (
         FOREIGN KEY (SubCategoryKey)
         REFERENCES stg.stg_ProductSubCategory(SubCategoryKey)
 );
+
+-- verificação que dealer price e list price tem que ser > 1
+ALTER TABLE stg.stg_Product
+ADD CONSTRAINT CK_Product_MinPrices
+CHECK (DealerPrice >= 1.0 AND ListPrice >=1.0);
+
 GO
 
 -- MANUFACTURER ------------------------------------------------------------------------------------
