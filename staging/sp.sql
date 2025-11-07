@@ -654,3 +654,78 @@ BEGIN
     END CATCH
 END;
 GO
+
+-- DATABASE STATISTICS PROCEDURE
+CREATE OR ALTER PROCEDURE stg.usp_dbstatistics
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    DECLARE @TableName NVARCHAR(128)
+    DECLARE @SchemaName NVARCHAR(128)
+    DECLARE @SQL NVARCHAR(MAX)
+    
+   
+    CREATE TABLE #TempStats (
+        TableName NVARCHAR(128),
+        SchemaName NVARCHAR(128),
+        RecordCount BIGINT,
+        SpaceUsedKB DECIMAL(18,2)
+    )
+    
+    
+    DECLARE TableCursor CURSOR FOR
+        SELECT TABLE_SCHEMA, TABLE_NAME 
+        FROM INFORMATION_SCHEMA.TABLES 
+        WHERE TABLE_TYPE = 'BASE TABLE'
+        AND TABLE_SCHEMA = 'stg'
+    
+    OPEN TableCursor
+    
+    FETCH NEXT FROM TableCursor INTO @SchemaName, @TableName
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @SQL = N'
+            INSERT INTO #TempStats (SchemaName, TableName, RecordCount, SpaceUsedKB)
+            SELECT 
+                ''' + @SchemaName + ''',
+                ''' + @TableName + ''',
+                COUNT_BIG(*),
+                SUM(a.used_pages) * 8.0
+            FROM ' + QUOTENAME(@SchemaName) + '.' + QUOTENAME(@TableName) + ' t
+            CROSS APPLY (
+                SELECT used_pages
+                FROM sys.partitions p
+                INNER JOIN sys.allocation_units a ON p.partition_id = a.container_id
+                WHERE p.object_id = OBJECT_ID(''' + @SchemaName + '.' + @TableName + ''')
+            ) a'
+        
+        EXEC sp_executesql @SQL
+        
+        FETCH NEXT FROM TableCursor INTO @SchemaName, @TableName
+    END
+    
+    CLOSE TableCursor
+    DEALLOCATE TableCursor
+    
+    
+    INSERT INTO stg.dbStatistics (SchemaName, TableName, RecordCount, SpaceUsedKB)
+    SELECT SchemaName, TableName, RecordCount, SpaceUsedKB
+    FROM #TempStats
+    
+   
+    DROP TABLE #TempStats
+    
+    
+    SELECT 
+        TableName,
+        SchemaName,
+        RecordCount,
+        SpaceUsedKB,
+        StatisticsDateTime
+    FROM stg.dbStatistics
+    WHERE StatisticsDateTime = (SELECT MAX(StatisticsDateTime) FROM stg.dbStatistics)
+    ORDER BY SchemaName, TableName;
+END;
+GO

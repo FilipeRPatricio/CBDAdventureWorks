@@ -308,3 +308,18 @@ CREATE TABLE stg.stg_OrderDetail (
 );
 GO
 
+-- DATABASE STATISTICS TABLE ---------------------------------------------------------------------------
+IF OBJECT_ID('stg.dbStatistics', 'U') IS NOT NULL
+    DROP TABLE stg.dbStatistics;
+GO
+
+CREATE TABLE stg.dbStatistics (
+    StatId INT IDENTITY(1,1) PRIMARY KEY,
+    TableName NVARCHAR(128) NOT NULL,
+    SchemaName NVARCHAR(128) NOT NULL,
+    RecordCount BIGINT NOT NULL,
+    SpaceUsedKB DECIMAL(18,2) NOT NULL,
+    StatisticsDateTime DATETIME2 NOT NULL DEFAULT GETDATE()
+);
+GO
+
