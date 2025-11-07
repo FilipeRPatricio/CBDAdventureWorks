@@ -1,14 +1,21 @@
---criação da stg schema e criação das tabelas staging
+/*
+Grupo 5 
+202300133, Filipe Rodrigues Patricio 
+202300532, JosÃ© Vicente Camolas da Silva 
+
+CriaÃ§Ã£o da stg schema e criaÃ§Ã£o das tabelas staging
+*/
+
 
 USE AdventureWorksLegacy;
 GO
 
---criar schema se ainda não existir
+--criar schema se ainda nï¿½o existir
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'stg')
     EXEC('CREATE SCHEMA stg;');
 GO
 
---se a tabela já existir, elimina-a 
+--se a tabela jï¿½ existir, elimina-a 
 
 IF OBJECT_ID('stg.stg_OrderDetail', 'U') IS NOT NULL
     DROP TABLE stg.stg_OrderDetail;
@@ -215,7 +222,7 @@ CREATE TABLE stg.stg_Product (
         REFERENCES stg.stg_ProductSubCategory(SubCategoryKey)
 );
 
--- verificação que dealer price e list price tem que ser > 1
+-- verificaï¿½ï¿½o que dealer price e list price tem que ser > 1
 ALTER TABLE stg.stg_Product
 ADD CONSTRAINT CK_Product_MinPrices
 CHECK (DealerPrice >= 1.0 AND ListPrice >=1.0);

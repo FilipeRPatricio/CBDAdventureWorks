@@ -1,3 +1,12 @@
+/*
+Grupo 5
+202300133, Filipe Rodrigues Patricio
+202300532, JosÃ© Vicente Camolas da Silva
+
+Inserts de dados nas tabelas staging
+*/
+
+
 USE AdventureWorksLegacy;
 GO
 
@@ -36,7 +45,7 @@ COMMIT TRAN;
 PRINT 'Tabelas staging limpas...';
 
 --------------------------------------------------------
--- ENCRIPTAÇÃO SETUP (apenas cria se não existir)
+-- ENCRIPTAï¿½ï¿½O SETUP (apenas cria se nï¿½o existir)
 --------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
@@ -146,9 +155,12 @@ WHERE s.SalesTerritoryGroup IS NOT NULL
 --------------------------------------------
 INSERT INTO stg.stg_Country (CountryName, CountryRegionCode)
 SELECT DISTINCT
-    c.CountryRegionName,
-    c.CountryRegionCode
-FROM dbo.Customer c;
+    st.SalesTerritoryCountry,
+    COALESCE(c.CountryRegionCode, 'Unknown') as CountryRegionCode
+FROM dbo.SalesTerritory st
+LEFT JOIN dbo.Customer c ON st.SalesTerritoryCountry = c.CountryRegionName
+WHERE st.SalesTerritoryCountry IS NOT NULL
+AND st.SalesTerritoryCountry NOT IN (SELECT CountryName FROM stg.stg_Country);
 
 -------------------------------------------------
 -- SALES TERRITORY
@@ -167,13 +179,14 @@ SELECT DISTINCT
     g.GroupKey,
     NULL AS StateProvinceKey
 FROM dbo.SalesTerritory AS s
-INNER JOIN stg.stg_Country AS c
+LEFT JOIN stg.stg_Country AS c
     ON c.CountryName = s.SalesTerritoryCountry
-INNER JOIN stg.stg_SalesTerritoryGroup AS g
+LEFT JOIN stg.stg_SalesTerritoryGroup AS g
     ON g.GroupName = s.SalesTerritoryGroup
 WHERE s.SalesTerritoryKey NOT IN (
     SELECT SalesTerritoryKey FROM stg.stg_SalesTerritory
-);
+)
+AND c.CountryKey IS NOT NULL;
 
 ----------------------------------------------------
 -- CITY
@@ -260,7 +273,7 @@ INSERT INTO stg.stg_SentEmails (UserKey, Receiver, Message, TimeStamp)
 SELECT 
     u.UserKey,
     u.Email,
-    CONCAT('Olá ', c.FirstName, ', obrigado por se registar!'),
+    CONCAT('Olï¿½ ', c.FirstName, ', obrigado por se registar!'),
     ISNULL(c.DateFirstPurchase, GETDATE())
 FROM stg.stg_User u
 JOIN stg.stg_Customer c ON u.UserKey = c.CustomerKey;

@@ -1,16 +1,23 @@
+/*
+Grupo 5
+202300133, Filipe Rodrigues Patricio
+202300532, José Vicente Camolas da Silva
+
+Procedures para manipulação das tabelas staging
+*/
+
 -- COUNTRY PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddCountry
-    @CountryKey INT,
     @CountryName NVARCHAR(100),
     @CountryRegionCode NVARCHAR(10) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_Country (CountryKey, CountryName, CountryRegionCode)
-        VALUES (@CountryKey, @CountryName, @CountryRegionCode);
+        INSERT INTO stg.stg_Country (CountryName, CountryRegionCode)
+        VALUES (@CountryName, @CountryRegionCode);
         
-        SELECT 'Country added successfully' AS Message, @CountryKey AS CountryKey;
+        SELECT 'Country added successfully' AS Message, SCOPE_IDENTITY() AS CountryKey;
     END TRY
     BEGIN CATCH
         THROW;
@@ -39,16 +46,15 @@ GO
 
 -- SALES TERRITORY GROUP PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddSalesTerritoryGroup
-    @GroupKey INT,
     @GroupName NVARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_SalesTerritoryGroup (GroupKey, GroupName)
-        VALUES (@GroupKey, @GroupName);
+        INSERT INTO stg.stg_SalesTerritoryGroup (GroupName)
+        VALUES (@GroupName);
         
-        SELECT 'Sales Territory Group added successfully' AS Message, @GroupKey AS GroupKey;
+        SELECT 'Sales Territory Group added successfully' AS Message, SCOPE_IDENTITY() AS GroupKey;
     END TRY
     BEGIN CATCH
         THROW;
@@ -91,7 +97,7 @@ CREATE OR ALTER PROCEDURE stg.usp_AddCustomer
     @Occupation NVARCHAR(100) = NULL,
     @NumberCarsOwned TINYINT = NULL,
     @AddressLine1 NVARCHAR(100) = NULL,
-    @City NVARCHAR(50) = NULL,
+    @CityKey INT,
     @StateProvinceCode NVARCHAR(10) = NULL,
     @StateProvinceName NVARCHAR(100) = NULL,
     @CountryRegionCode NVARCHAR(10) = NULL,
@@ -100,8 +106,8 @@ CREATE OR ALTER PROCEDURE stg.usp_AddCustomer
     @SalesTerritoryKey INT = NULL,
     @Phone NVARCHAR(25) = NULL,
     @DateFirstPurchase DATE = NULL,
-    @Password NVARCHAR(255) = NULL,
-    @NIF NVARCHAR(20) = NULL
+    @Password VARBINARY(64) = NULL,
+    @NIF VARBINARY(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -109,14 +115,14 @@ BEGIN
         INSERT INTO stg.stg_Customer (
             CustomerKey, Title, FirstName, MiddleName, LastName, BirthDate,
             MaritalStatus, Gender, EmailAddress, YearlyIncome, Education,
-            Occupation, NumberCarsOwned, AddressLine1, City, StateProvinceCode,
+            Occupation, NumberCarsOwned, AddressLine1, CityKey, StateProvinceCode,
             StateProvinceName, CountryRegionCode, CountryRegionName, PostalCode,
             SalesTerritoryKey, Phone, DateFirstPurchase, [Password], NIF
         )
         VALUES (
             @CustomerKey, @Title, @FirstName, @MiddleName, @LastName, @BirthDate,
             @MaritalStatus, @Gender, @EmailAddress, @YearlyIncome, @Education,
-            @Occupation, @NumberCarsOwned, @AddressLine1, @City, @StateProvinceCode,
+            @Occupation, @NumberCarsOwned, @AddressLine1, @CityKey, @StateProvinceCode,
             @StateProvinceName, @CountryRegionCode, @CountryRegionName, @PostalCode,
             @SalesTerritoryKey, @Phone, @DateFirstPurchase, @Password, @NIF
         );
@@ -195,7 +201,6 @@ GO
 -- SENT EMAILS PROCEDURES
   
 CREATE OR ALTER PROCEDURE stg.usp_AddSentEmail
-    @EmailId INT,
     @UserKey INT,
     @Receiver NVARCHAR(100),
     @Message NVARCHAR(255),
@@ -204,10 +209,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_SentEmails (EmailId, UserKey, Receiver, Message, TimeStamp)
-        VALUES (@EmailId, @UserKey, @Receiver, @Message, ISNULL(@TimeStamp, GETDATE()));
+        INSERT INTO stg.stg_SentEmails (UserKey, Receiver, Message, TimeStamp)
+        VALUES (@UserKey, @Receiver, @Message, ISNULL(@TimeStamp, GETDATE()));
         
-        SELECT 'Email record added successfully' AS Message, @EmailId AS EmailId;
+        SELECT 'Email record added successfully' AS Message, SCOPE_IDENTITY() AS EmailId;
     END TRY
     BEGIN CATCH
         THROW;
@@ -278,17 +283,15 @@ GO
 -- CITY PROCEDURES
   
 CREATE OR ALTER PROCEDURE stg.usp_AddCity
-    @CityKey INT,
-    @CustomerKey INT,
     @CityName NVARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_City (CityKey, CustomerKey, CityName)
-        VALUES (@CityKey, @CustomerKey, @CityName);
+        INSERT INTO stg.stg_City (CityName)
+        VALUES (@CityName);
         
-        SELECT 'City added successfully' AS Message, @CityKey AS CityKey;
+        SELECT 'City added successfully' AS Message, SCOPE_IDENTITY() AS CityKey;
     END TRY
     BEGIN CATCH
         THROW;
@@ -318,17 +321,16 @@ GO
 -- PROVINCE PROCEDURES
   
 CREATE OR ALTER PROCEDURE stg.usp_AddProvince
-    @StateProvinceKey INT,
     @CityKey INT,
     @StateProvinceName NVARCHAR(50)
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_Province (StateProvinceKey, CityKey, StateProvinceName)
-        VALUES (@StateProvinceKey, @CityKey, @StateProvinceName);
+        INSERT INTO stg.stg_Province (CityKey, StateProvinceName)
+        VALUES (@CityKey, @StateProvinceName);
         
-        SELECT 'Province added successfully' AS Message, @StateProvinceKey AS StateProvinceKey;
+        SELECT 'Province added successfully' AS Message, SCOPE_IDENTITY() AS StateProvinceKey;
     END TRY
     BEGIN CATCH
         THROW;
@@ -358,16 +360,17 @@ GO
 -- CURRENCY PROCEDURES
 
 CREATE OR ALTER PROCEDURE stg.usp_AddCurrency
+    @CurrencyKey INT,
     @CurrencyAlternateKey NVARCHAR(50),
     @CurrencyName NVARCHAR(50)
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_Currency (CurrencyAlternateKey, CurrencyName)
-        VALUES (@CurrencyAlternateKey, @CurrencyName);
+        INSERT INTO stg.stg_Currency (CurrencyKey, CurrencyAlternateKey, CurrencyName)
+        VALUES (@CurrencyKey, @CurrencyAlternateKey, @CurrencyName);
         
-        SELECT 'Currency added successfully' AS Message, SCOPE_IDENTITY() AS CurrencyKey;
+        SELECT 'Currency added successfully' AS Message, @CurrencyKey AS CurrencyKey;
     END TRY
     BEGIN CATCH
         THROW;
@@ -501,17 +504,16 @@ GO
 
 -- MANUFACTURER PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddManufacturer
-    @ManuKey INT,
     @ProductKey INT,
     @ManuName NVARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_Manufacturer (ManuKey, ProductKey, ManuName)
-        VALUES (@ManuKey, @ProductKey, @ManuName);
+        INSERT INTO stg.stg_Manufacturer (ProductKey, ManuName)
+        VALUES (@ProductKey, @ManuName);
         
-        SELECT 'Manufacturer added successfully' AS Message, @ManuKey AS ManuKey;
+        SELECT 'Manufacturer added successfully' AS Message, SCOPE_IDENTITY() AS ManuKey;
     END TRY
     BEGIN CATCH
         THROW;
@@ -581,13 +583,13 @@ GO
 
 -- SALE PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddSale
-    @SalesOrderNumber INT,
+    @SalesOrderNumber NVARCHAR(20),
     @OrderDate DATE,
     @CustomerKey INT,
     @CurrencyKey INT,
     @DueDate DATE = NULL,
     @ShipDate DATE = NULL,
-    @SalesOrderLineNumber INT = NULL
+    @SalesOrderLineNumber INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -595,7 +597,7 @@ BEGIN
         INSERT INTO stg.stg_Sale (SalesOrderNumber, OrderDate, DueDate, ShipDate, CustomerKey, CurrencyKey, SalesOrderLineNumber)
         VALUES (@SalesOrderNumber, @OrderDate, @DueDate, @ShipDate, @CustomerKey, @CurrencyKey, @SalesOrderLineNumber);
         
-        SELECT 'Sale added successfully' AS Message, @SalesOrderNumber AS SalesOrderNumber;
+        SELECT 'Sale added successfully' AS Message, @SalesOrderNumber AS SalesOrderNumber, @SalesOrderLineNumber AS SalesOrderLineNumber;
     END TRY
     BEGIN CATCH
         THROW;
@@ -624,8 +626,8 @@ GO
 
 -- ORDER DETAIL PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddOrderDetail
-    @OrderDetailKey INT,
-    @SalesOrderNumber INT,
+    @SalesOrderNumber NVARCHAR(20),
+    @SalesOrderLineNumber INT,
     @ProductKey INT,
     @UnitPrice DECIMAL(10,2),
     @Quantity INT,
@@ -637,15 +639,15 @@ BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
         INSERT INTO stg.stg_OrderDetail (
-            OrderDetailKey, SalesOrderNumber, ProductKey, TaxAmt,
+            SalesOrderNumber, SalesOrderLineNumber, ProductKey, TaxAmt,
             UnitPrice, Quantity, Freight, ProductStandardAmt
         )
         VALUES (
-            @OrderDetailKey, @SalesOrderNumber, @ProductKey, @TaxAmt,
+            @SalesOrderNumber, @SalesOrderLineNumber, @ProductKey, @TaxAmt,
             @UnitPrice, @Quantity, @Freight, @ProductStandardAmt
         );
         
-        SELECT 'Order Detail added successfully' AS Message, @OrderDetailKey AS OrderDetailKey;
+        SELECT 'Order Detail added successfully' AS Message, SCOPE_IDENTITY() AS OrderDetailKey;
     END TRY
     BEGIN CATCH
         THROW;

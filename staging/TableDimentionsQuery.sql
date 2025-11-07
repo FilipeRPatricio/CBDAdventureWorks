@@ -1,3 +1,10 @@
+/*
+Grupo 5
+202300133, Filipe Rodrigues Patricio
+202300532, José Vicente Camolas da Silva
+Queries para obter as dimensões das tabelas 
+*/
+
 USE AdventureWorksLegacy;
 GO
 
