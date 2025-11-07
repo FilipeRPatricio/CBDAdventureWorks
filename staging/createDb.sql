@@ -176,7 +176,7 @@ CREATE TABLE stg.stg_Province (
 
 -- CURRENCY -----------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Currency (
-    CurrencyKey INT IDENTITY(1,1) PRIMARY KEY,
+    CurrencyKey INT PRIMARY KEY,
     CurrencyAlternateKey NVARCHAR(50) UNIQUE,
     CurrencyName NVARCHAR(50)
 );

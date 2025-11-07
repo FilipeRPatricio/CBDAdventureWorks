@@ -3,22 +3,22 @@
 USE AdventureWorksLegacy;
 GO
 
--- Cria Master Key s� se n�o existir
+-- Cria Master Key se nao existir
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
 
--- Cria Certificado s� se n�o existir
+-- Cria Certificado se nao existir
 IF NOT EXISTS (SELECT * FROM sys.certificates WHERE name = 'Cert_NIF')
     CREATE CERTIFICATE Cert_NIF WITH SUBJECT = 'Certificado para NIF';
 
--- Cria Chave Sim�trica s� se n�o existir
+-- Cria Chave Simetrica se nao existir
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = 'Key_NIF')
     CREATE SYMMETRIC KEY Key_NIF
         WITH ALGORITHM = AES_256
         ENCRYPTION BY CERTIFICATE Cert_NIF;
 
 
--- Encripta��o/ cria��o da chave 
+-- Encriptacao/ criacao da chave 
 /**
  Executa isto apenas uma vez no setup
 CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
@@ -28,18 +28,19 @@ CREATE SYMMETRIC KEY Key_NIF
     ENCRYPTION BY CERTIFICATE Cert_NIF;
 **/
 
-
-
 --CURRENCY --------------------------------------------------------------------------------
 INSERT INTO stg.stg_Currency (CurrencyAlternateKey, CurrencyName)
-SELECT DISTINCT 
-    c.CurrencyAlternateKey, 
+SELECT DISTINCT
+    c.CurrencyAlternateKey,
     c.CurrencyName
 FROM dbo.Currency AS c
-WHERE c.CurrencyAlternateKey NOT IN ( -- evita inserir algo que j� esteja na tabela staging
-    SELECT CurrencyAlternateKey 
-    FROM stg.stg_Currency
-);
+WHERE c.CurrencyAlternateKey IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1 
+      FROM stg.stg_Currency s
+      WHERE TRIM(UPPER(s.CurrencyAlternateKey)) = TRIM(UPPER(c.CurrencyAlternateKey))
+  );
+
 
 -- PRODUCT SUBCATEGORY --------------------------------TOU A TER PROBLEMAS AQUI ------------
 INSERT INTO stg.stg_ProductSubCategory (                -- diz me que o EnglishCategoryName ta a null em toda a coluna
@@ -99,7 +100,8 @@ WHERE
  
 GO
 
--- Observa��o da verifica��o do numero de produtos com valor inferior a 1
+-- Observacao da verificacao do numero de produtos com valor inferior a 1
+/**
 
 SELECT COUNT(*) AS TotalOriginal FROM dbo.Products;
 SELECT COUNT(*) AS TotalCarregados FROM stg.stg_Product;
@@ -107,7 +109,7 @@ SELECT COUNT(*) AS Invalidos FROM dbo.Products
 WHERE ISNUMERIC(DealerPrice) = 0 OR ISNUMERIC(ListPrice) = 0
    OR TRY_CAST(DealerPrice AS DECIMAL(18,2)) < 1
    OR TRY_CAST(ListPrice AS DECIMAL(18,2)) < 1;
-
+**/
 
 -- MANUFACTURER -------------------------------------------------------------------------------
 INSERT INTO stg.stg_Manufacturer (
@@ -132,7 +134,8 @@ INSERT INTO stg.stg_SalesTerritoryGroup (
     )
     SELECT DISTINCT
         s.GroupName
-    FROM stg.stg_SalesTerritoryGroup AS s
+    FROM dbo.SalesTerritory AS s
+
 
 -- COUNTRY --------------------------------------------------------------------------------------------
 
@@ -327,9 +330,36 @@ WHERE NOT EXISTS (
 );
 
 
-
-
 GO
+
+
+-- Tamanho médio de registo por tabela
+
+SELECT 
+    s.name AS SchemaName,
+    t.name AS TableName,
+    SUM(p.rows) AS NumbReg,
+    SUM(a.total_pages) * 8 AS DimTabKb,
+    CASE WHEN SUM(p.rows) = 0 THEN 0
+         ELSE ROUND((SUM(a.total_pages) * 8.0) / SUM(p.rows), 4)
+    END AS AvgKBPerRow
+FROM sys.tables t
+JOIN sys.schemas s ON t.schema_id = s.schema_id
+JOIN sys.indexes i ON t.object_id = i.object_id
+JOIN sys.partitions p ON i.object_id = p.object_id AND i.index_id = p.index_id
+JOIN sys.allocation_units a ON p.partition_id = a.container_id
+WHERE t.is_ms_shipped = 0
+GROUP BY s.name, t.name
+ORDER BY DimTabKb DESC;
+GO
+
+
+
+
+
+
+
+
 
 
 
