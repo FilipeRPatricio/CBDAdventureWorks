@@ -28,10 +28,11 @@ DELETE FROM stg.stg_Phone;
 DELETE FROM stg.stg_SentEmails;
 DELETE FROM stg.stg_User;
 DELETE FROM stg.stg_Customer;
+DELETE FROM stg.stg_SalesTerritory;  -- Move this before Country deletion
 DELETE FROM stg.stg_Province;
 DELETE FROM stg.stg_City;
-DELETE FROM stg.stg_Country;
 DELETE FROM stg.stg_SalesTerritoryGroup;
+DELETE FROM stg.stg_Country;         -- Move after SalesTerritory deletion
 DELETE FROM stg.stg_Manufacturer;
 DELETE FROM stg.stg_Product;
 DELETE FROM stg.stg_ProductSubCategory;
