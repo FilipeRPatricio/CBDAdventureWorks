@@ -3,22 +3,22 @@
 USE AdventureWorksLegacy;
 GO
 
--- Cria Master Key só se não existir
+-- Cria Master Key sï¿½ se nï¿½o existir
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
 
--- Cria Certificado só se não existir
+-- Cria Certificado sï¿½ se nï¿½o existir
 IF NOT EXISTS (SELECT * FROM sys.certificates WHERE name = 'Cert_NIF')
     CREATE CERTIFICATE Cert_NIF WITH SUBJECT = 'Certificado para NIF';
 
--- Cria Chave Simétrica só se não existir
+-- Cria Chave Simï¿½trica sï¿½ se nï¿½o existir
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = 'Key_NIF')
     CREATE SYMMETRIC KEY Key_NIF
         WITH ALGORITHM = AES_256
         ENCRYPTION BY CERTIFICATE Cert_NIF;
 
 
--- Encriptação/ criação da chave 
+-- Encriptaï¿½ï¿½o/ criaï¿½ï¿½o da chave 
 /**
  Executa isto apenas uma vez no setup
 CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
@@ -36,7 +36,7 @@ SELECT DISTINCT
     c.CurrencyAlternateKey, 
     c.CurrencyName
 FROM dbo.Currency AS c
-WHERE c.CurrencyAlternateKey NOT IN ( -- evita inserir algo que já esteja na tabela staging
+WHERE c.CurrencyAlternateKey NOT IN ( -- evita inserir algo que jï¿½ esteja na tabela staging
     SELECT CurrencyAlternateKey 
     FROM stg.stg_Currency
 );
@@ -99,7 +99,7 @@ WHERE
  
 GO
 
--- Observação da verificação do numero de produtos com valor inferior a 1
+-- Observaï¿½ï¿½o da verificaï¿½ï¿½o do numero de produtos com valor inferior a 1
 
 SELECT COUNT(*) AS TotalOriginal FROM dbo.Products;
 SELECT COUNT(*) AS TotalCarregados FROM stg.stg_Product;
@@ -227,8 +227,8 @@ SELECT
     c.CustomerKey AS UserKey,           
     c.EmailAddress AS Email,            
     c.[Password],                       
-    NULL AS SecurityQuestion,           -- ainda não temos, fica NULL
-    NULL AS SecurityAnswer,             -- ainda não temos, fica NULL
+    NULL AS SecurityQuestion,           -- ainda nï¿½o temos, fica NULL
+    NULL AS SecurityAnswer,             -- ainda nï¿½o temos, fica NULL
     c.DateFirstPurchase                 
 FROM stg.stg_Customer AS c
 WHERE c.CustomerKey NOT IN (SELECT UserKey FROM stg.stg_User);
@@ -239,7 +239,7 @@ INSERT INTO stg.stg_SentEmails (UserKey, Receiver, Message, TimeStamp)
 SELECT 
     u.UserKey,
     u.Email,
-    CONCAT('Olá ', c.FirstName, ', obrigado por se registar!') AS Message,
+    CONCAT('Olï¿½ ', c.FirstName, ', obrigado por se registar!') AS Message,
     ISNULL(c.DateFirstPurchase, GETDATE()) AS TimeStamp
 FROM stg.stg_User AS u
 INNER JOIN stg.stg_Customer AS c
