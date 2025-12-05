@@ -10,12 +10,12 @@ Criação da stg schema e criação das tabelas staging
 USE AdventureWorksLegacy;
 GO
 
---criar schema se ainda n�o existir
+--criar schema se ainda no existir
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'stg')
     EXEC('CREATE SCHEMA stg;');
 GO
 
---se a tabela j� existir, elimina-a 
+--se a tabela j existir, elimina-a 
 
 IF OBJECT_ID('stg.stg_OrderDetail', 'U') IS NOT NULL
     DROP TABLE stg.stg_OrderDetail;
@@ -40,7 +40,6 @@ IF OBJECT_ID('stg.stg_User', 'U') IS NOT NULL
 
 IF OBJECT_ID('stg.stg_Province', 'U') IS NOT NULL
     DROP TABLE stg.stg_Province;
-
 
 IF OBJECT_ID('stg.stg_Phone', 'U') IS NOT NULL
     DROP TABLE stg.stg_Phone;
@@ -197,6 +196,13 @@ CREATE TABLE stg.stg_ProductSubCategory (
 );
 GO
 
+-- MANUFACTURER ------------------------------------------------------------------------------------
+CREATE TABLE stg.stg_Manufacturer (
+    ManuKey INT IDENTITY(1,1) PRIMARY KEY,
+    ManuName NVARCHAR(100)
+);
+GO
+
 -- PRODUCTS --------------------------------------------------------------------------------------
 CREATE TABLE stg.stg_Product (
     ProductKey INT PRIMARY KEY,     
@@ -216,29 +222,22 @@ CREATE TABLE stg.stg_Product (
     Weight DECIMAL(10,2) NULL,                  
     DaysToManufacture SMALLINT NULL,            
     ProductLine NCHAR(2) NULL, 
+    ManuKey INT NOT NULL,
 
     CONSTRAINT FK_Product_SubCategory
         FOREIGN KEY (SubCategoryKey)
-        REFERENCES stg.stg_ProductSubCategory(SubCategoryKey)
+        REFERENCES stg.stg_ProductSubCategory(SubCategoryKey),
+    
+    CONSTRAINT FK_Product_Manufacturer
+        FOREIGN KEY (ManuKey)
+        REFERENCES stg.stg_Manufacturer(ManuKey)
 );
 
--- verifica��o que dealer price e list price tem que ser > 1
+-- verificao que dealer price e list price tem que ser > 1
 ALTER TABLE stg.stg_Product
 ADD CONSTRAINT CK_Product_MinPrices
 CHECK (DealerPrice >= 1.0 AND ListPrice >=1.0);
 
-GO
-
--- MANUFACTURER ------------------------------------------------------------------------------------
-CREATE TABLE stg.stg_Manufacturer (
-    ManuKey INT IDENTITY(1,1) PRIMARY KEY,
-    ProductKey INT NOT NULL,
-    ManuName NVARCHAR(100)
-
-    CONSTRAINT FK_Manufacturer_Product
-        FOREIGN KEY (ProductKey)
-        REFERENCES stg.stg_Product(ProductKey)
-);
 GO
 
 -- SALES TERRITORY -------------------------------------------------------------------------------------
@@ -322,4 +321,3 @@ CREATE TABLE stg.dbStatistics (
     StatisticsDateTime DATETIME2 NOT NULL DEFAULT GETDATE()
 );
 GO
-

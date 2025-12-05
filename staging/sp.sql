@@ -401,6 +401,7 @@ GO
 -- PRODUCT PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddProduct
     @ProductKey INT,
+    @ManuKey INT,
     @ModelName NVARCHAR(100) = NULL,
     @Style NCHAR(2) = NULL,
     @SubCategoryKey INT = NULL,
@@ -425,13 +426,13 @@ BEGIN
             ProductKey, ModelName, Style, SubCategoryKey, EnglishDescription,
             Class, DealerPrice, StandardCost, FinishedGoodsFlag, Color,
             SafetyStockLevel, ListPrice, Size, SizeRange, Weight,
-            DaysToManufacture, ProductLine
+            DaysToManufacture, ProductLine, ManuKey
         )
         VALUES (
             @ProductKey, @ModelName, @Style, @SubCategoryKey, @EnglishDescription,
             @Class, @DealerPrice, @StandardCost, @FinishedGoodsFlag, @Color,
             @SafetyStockLevel, @ListPrice, @Size, @SizeRange, @Weight,
-            @DaysToManufacture, @ProductLine
+            @DaysToManufacture, @ProductLine, @ManuKey
         );
         
         SELECT 'Product added successfully' AS Message, @ProductKey AS ProductKey;
@@ -464,15 +465,14 @@ GO
 -- PRODUCT SUBCATEGORY PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddProductSubCategory
     @SubCategoryKey INT,
-    @ProductKey INT,
     @EnglishCategoryName NVARCHAR(100) = NULL,
     @SubCategoryName NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_ProductSubCategory (SubCategoryKey, ProductKey, EnglishCategoryName, SubCategoryName)
-        VALUES (@SubCategoryKey, @ProductKey, @EnglishCategoryName, @SubCategoryName);
+        INSERT INTO stg.stg_ProductSubCategory (SubCategoryKey, EnglishCategoryName, SubCategoryName)
+        VALUES (@SubCategoryKey, @EnglishCategoryName, @SubCategoryName);
         
         SELECT 'Product SubCategory added successfully' AS Message, @SubCategoryKey AS SubCategoryKey;
     END TRY
@@ -504,14 +504,13 @@ GO
 
 -- MANUFACTURER PROCEDURES
 CREATE OR ALTER PROCEDURE stg.usp_AddManufacturer
-    @ProductKey INT,
     @ManuName NVARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        INSERT INTO stg.stg_Manufacturer (ProductKey, ManuName)
-        VALUES (@ProductKey, @ManuName);
+        INSERT INTO stg.stg_Manufacturer (ManuName)
+        VALUES (@ManuName);
         
         SELECT 'Manufacturer added successfully' AS Message, SCOPE_IDENTITY() AS ManuKey;
     END TRY

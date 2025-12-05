@@ -6,6 +6,9 @@ Grupo 5
 Queries para verificar a conformidade da migração efetuada
 */
 
+  /*
+   Base de dados nova
+   */
 -- Contagem total de produtos
 SELECT COUNT(*) AS TotalProducts
 FROM stg.stg_Product;

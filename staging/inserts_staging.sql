@@ -76,6 +76,24 @@ AND NOT EXISTS (
       WHERE s.CurrencyKey = c.CurrencyKey
   );
 
+---------------------------------------------
+-- MANUFACTURER
+---------------------------------------------
+-- Create a temporary table to hold our made-up manufacturer names
+CREATE TABLE #TempManufacturers (ManuName NVARCHAR(50));
+INSERT INTO #TempManufacturers (ManuName) VALUES
+('ACME Corp.'),
+('Globex Corporation'),
+('Stark Industries'),
+('Wayne Enterprises'),
+('Cyberdyne Systems'),
+('Buy n Large'),
+('Aperture Science'),
+('Sirius Cybernetics Corp.');
+
+INSERT INTO stg.stg_Manufacturer (ManuName)
+SELECT DISTINCT ManuName FROM #TempManufacturers;
+
 ---------------------------------------------------
 -- PRODUCT SUBCATEGORY 
 ---------------------------------------------------
@@ -94,7 +112,7 @@ FROM dbo.ProductSubCategory ps LEFT JOIN dbo.Products p
 ----------------------------------------------
 INSERT INTO stg.stg_Product (
     ProductKey, ModelName, Style, SubCategoryKey, EnglishDescription, Class,
-    DealerPrice, StandardCost, FinishedGoodsFlag, Color, SafetyStockLevel,
+    DealerPrice, StandardCost, FinishedGoodsFlag, Color, SafetyStockLevel, ManuKey,
     ListPrice, Size, SizeRange, Weight, DaysToManufacture, ProductLine
 )
 SELECT DISTINCT 
@@ -108,6 +126,8 @@ SELECT DISTINCT
     p.StandardCost,
     p.FinishedGoodsFlag,
     p.Color,
+    -- Assign a random manufacturer to each product
+    (SELECT TOP 1 ManuKey FROM stg.stg_Manufacturer ORDER BY NEWID()) AS ManuKey,
     p.SafetyStockLevel,
     TRY_CAST(p.ListPrice AS DECIMAL(18,2)),
     p.Size,
@@ -122,23 +142,8 @@ WHERE
     AND TRY_CAST(p.DealerPrice AS DECIMAL(18,2)) >= 1.0
     AND TRY_CAST(p.ListPrice AS DECIMAL(18,2)) >= 1.0;
 
----------------------------------------------
--- MANUFACTURER
----------------------------------------------
-INSERT INTO stg.stg_Manufacturer (
-ProductKey,
-ManuName
-)
-SELECT DISTINCT
-    p.ProductKey,
-    NULL AS ManuName
-FROM stg.stg_Product AS p;
-
---insert simples para testar
-
-UPDATE stg.stg_Manufacturer
-SET ManuName = 'Mike'
-WHERE ProductKey IN (SELECT ProductKey FROM stg.stg_Product WHERE ProductLine = 'M');
+-- Drop the temporary table
+DROP TABLE #TempManufacturers;
 
 
 -------------------------------------------------
@@ -274,7 +279,7 @@ INSERT INTO stg.stg_SentEmails (UserKey, Receiver, Message, TimeStamp)
 SELECT 
     u.UserKey,
     u.Email,
-    CONCAT('Ol� ', c.FirstName, ', obrigado por se registar!'),
+    CONCAT('Olá ', c.FirstName, ', obrigado por se registar!'),
     ISNULL(c.DateFirstPurchase, GETDATE())
 FROM stg.stg_User u
 JOIN stg.stg_Customer c ON u.UserKey = c.CustomerKey;
