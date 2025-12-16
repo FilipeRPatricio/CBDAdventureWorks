@@ -94,6 +94,14 @@ INSERT INTO #TempManufacturers (ManuName) VALUES
 INSERT INTO stg.stg_Manufacturer (ManuName)
 SELECT DISTINCT ManuName FROM #TempManufacturers;
 
+IF NOT EXISTS (SELECT 1 FROM stg.stg_Manufacturer)
+
+BEGIN
+    INSERT INTO stg.stg_Manufacturer (ManuName)
+    VALUES ('Unknown Manufacturer');
+END
+
+
 ---------------------------------------------------
 -- PRODUCT SUBCATEGORY 
 ---------------------------------------------------
@@ -110,6 +118,11 @@ FROM dbo.ProductSubCategory ps LEFT JOIN dbo.Products p
 ----------------------------------------------
 -- PRODUCT
 ----------------------------------------------
+
+DECLARE @DefaultManuKey INT;
+SELECT @DefaultManuKey = MIN(ManuKey) FROM stg.stg_Manufacturer;
+
+
 INSERT INTO stg.stg_Product (
     ProductKey, ModelName, Style, SubCategoryKey, EnglishDescription, Class,
     DealerPrice, StandardCost, FinishedGoodsFlag, Color, SafetyStockLevel, ManuKey,
@@ -126,9 +139,8 @@ SELECT DISTINCT
     p.StandardCost,
     p.FinishedGoodsFlag,
     p.Color,
-    -- Assign a random manufacturer to each product
-    (SELECT TOP 1 ManuKey FROM stg.stg_Manufacturer ORDER BY NEWID()) AS ManuKey,
     p.SafetyStockLevel,
+    @DefaultManuKey AS ManuKey,
     TRY_CAST(p.ListPrice AS DECIMAL(18,2)),
     p.Size,
     p.SizeRange,
