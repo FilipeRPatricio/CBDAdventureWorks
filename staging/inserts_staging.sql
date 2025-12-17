@@ -46,7 +46,7 @@ COMMIT TRAN;
 PRINT 'Tabelas staging limpas...';
 
 --------------------------------------------------------
--- ENCRIPTA��O SETUP (apenas cria se n�o existir)
+-- ENCRIPTAcaO SETUP (apenas cria se nao existir)
 --------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'PalavraPasseForte123!';
