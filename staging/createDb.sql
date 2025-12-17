@@ -50,14 +50,14 @@ IF OBJECT_ID('stg.stg_Customer', 'U') IS NOT NULL
 IF OBJECT_ID('stg.stg_City', 'U') IS NOT NULL
     DROP TABLE stg.stg_City;
 
-IF OBJECT_ID('stg.stg_Manufacturer', 'U') IS NOT NULL
-    DROP TABLE stg.stg_Manufacturer;
-
 IF OBJECT_ID('stg.stg_SalesTerritoryGroup', 'U') IS NOT NULL
     DROP TABLE stg.stg_SalesTerritoryGroup;
 
 IF OBJECT_ID('stg.stg_Product', 'U') IS NOT NULL
     DROP TABLE stg.stg_Product;
+
+IF OBJECT_ID('stg.stg_Manufacturer', 'U') IS NOT NULL
+    DROP TABLE stg.stg_Manufacturer;
 
 IF OBJECT_ID('stg.stg_ProductSubCategory', 'U') IS NOT NULL
     DROP TABLE stg.stg_ProductSubCategory;
